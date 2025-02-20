@@ -19,16 +19,18 @@ public class BearerFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
-        String authorization = req.getHeader("Authorization");
-        if (authorization == null) {
-            System.out.println("Authorization header is null");
-            return;
+        if (!req.getRequestURI().equals("/")) {
+            String authorization = req.getHeader("Authorization");
+            if (authorization == null) {
+                System.out.println("Authorization header is null");
+                return;
+            }
+            if (!authorization.startsWith("Bearer ")) {
+                System.out.println("Authorization header is invalid");
+                return;
+            }
+            System.out.printf("Bearer Token is <%s> in request %s.\n", authorization.substring(7), req.getRequestURL().toString());
         }
-        if (!authorization.startsWith("Bearer ")) {
-            System.out.println("Authorization header is invalid");
-            return;
-        }
-        System.out.printf("Bearer Token is <%s> in request %s.\n", authorization.substring(7), req.getRequestURL().toString());
         chain.doFilter(request, response);
     }
 }
