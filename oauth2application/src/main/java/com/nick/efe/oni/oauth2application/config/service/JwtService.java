@@ -17,10 +17,17 @@ public class JwtService {
         String encodedPayload = split[1];
         String encodedSignature = split[2];
 
-        Object decodedPayload = Base64.getUrlDecoder().decode(encodedPayload);
-
+        String decodedHeader = decodeToString(encodedHeader); // works
+        String decodedPayload = decodeToString(encodedPayload); // works
+        String decodedSignature = decodeToString(encodedSignature); // works?
+        System.out.println("Decoded header: " + decodedHeader);
         System.out.println("Decoded payload: " + decodedPayload);
+        System.out.println("Decoded signature: " + decodedSignature);
 
         return null;
+    }
+
+    private String decodeToString(String encodedString) {
+        return new String(Base64.getUrlDecoder().decode(encodedString));
     }
 }
