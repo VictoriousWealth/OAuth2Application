@@ -6,9 +6,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
 
 @Component
 public class LoggingFilter implements Filter {
@@ -28,18 +27,33 @@ public class LoggingFilter implements Filter {
 
         System.out.println("======================================================");
         HttpServletRequest req = (HttpServletRequest) request;
-        System.out.println("🌐 Incoming Request: " + req.getMethod() + " " + req.getRequestURI());
+        System.out.println("🌐 Incoming Request: " + req.getMethod() + " " + req.getRequestURI() + " with headers: " + getHeaderContent(req));
 
         chain.doFilter(request, response); // Continue request processing
 
         HttpServletResponse res = (HttpServletResponse) response;
+        System.out.println("🌐 Outgoing Response with status code " + res.getStatus() + " with headers: {" + getHeaderContent(res)+"}");
+        System.out.println("======================================================\n");
+
+    }
+
+    private Map<String, String> getHeaderContent(HttpServletResponse res) {
         Collection<String> headers = res.getHeaderNames();
         Map<String, String> headerMap = new HashMap<>();
         for (String header : headers) {
             headerMap.put(header, res.getHeader(header));
         }
-        System.out.println("🌐 Outgoing Response with status code " + res.getStatus() + " with headers: {" + headerMap+"}");
-        System.out.println("======================================================\n");
+        return headerMap;
+    }
 
+    private Map<String, String> getHeaderContent(HttpServletRequest req) {
+        Enumeration<String> headers = req.getHeaderNames();
+        Map<String, String> headerMap = new HashMap<>();
+        Iterator<String> iterator = headers.asIterator();
+        while (iterator.hasNext()) {
+            String header = iterator.next();
+            headerMap.put(header, req.getHeader(header));
+        }
+        return headerMap;
     }
 }
