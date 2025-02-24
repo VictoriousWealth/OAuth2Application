@@ -1,6 +1,7 @@
 package com.nick.efe.oni.oauth2application.config;
 
 import com.nick.efe.oni.oauth2application.config.filter.CustomJwtAuthFilter;
+import com.nick.efe.oni.oauth2application.config.filter.CustomUserDetailsAuthFilter;
 import com.nick.efe.oni.oauth2application.config.filter.LoggingFilter;
 import com.nick.efe.oni.oauth2application.config.provider.CustomJwtAuthenticationProvider;
 import com.nick.efe.oni.oauth2application.repository.UserRepository;
@@ -44,6 +45,8 @@ public class SecurityConfig {
         // 🔹 Authentication Filters
         http.addFilterBefore(new CustomJwtAuthFilter(requestMatcher(),
                 authenticationManager()), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new CustomUserDetailsAuthFilter(requestMatcher(), authenticationManager()),
+                UsernamePasswordAuthenticationFilter.class);
 
         // 🔹 Logout Filter (Enables /logout)
         http.logout(logout -> logout.logoutUrl("/logout").permitAll());
