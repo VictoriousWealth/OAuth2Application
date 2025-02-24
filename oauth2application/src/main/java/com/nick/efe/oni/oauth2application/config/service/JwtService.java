@@ -56,9 +56,10 @@ public class JwtService {
         long issueTime = payloadJson.get("iat").asLong();
         long expiryTime = payloadJson.get("exp").asLong();
 
-        System.out.println(issueTime+" ? "+expiryTime + " thus " + (!(issueTime<expiryTime)));
+        long timeInSeconds = System.currentTimeMillis()/1000;
+        System.out.println(timeInSeconds + " ? "+issueTime+" ? "+expiryTime + " thus " + (!(timeInSeconds < issueTime && issueTime < expiryTime)));
 
-        return !(/*System.currentTimeMillis() < issueTime &&*/ issueTime < expiryTime);
+        return !(issueTime < timeInSeconds && timeInSeconds < expiryTime);
     }
 
     private boolean isTokenTampered(String message, String signatureToMatchWith) throws NoSuchAlgorithmException, InvalidKeyException {
