@@ -29,11 +29,11 @@ public class CustomJwtAuthFilter extends AbstractAuthenticationProcessingFilter 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring("Bearer ".length());
             CustomJwtAuthenticationToken authRequest = new CustomJwtAuthenticationToken(token);
-            System.out.println("authRequest: " + authRequest);
             return getAuthenticationManager().authenticate(authRequest);
         }
 
-        return null; // No authentication if token is missing
+
+        return null; // Allow request to continue if no JWT is present
     }
 
     @Override

@@ -1,6 +1,9 @@
 package com.nick.efe.oni.oauth2application.config;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 import java.util.Collections;
 
 public class CustomJwtAuthenticationToken extends AbstractAuthenticationToken {
@@ -8,14 +11,14 @@ public class CustomJwtAuthenticationToken extends AbstractAuthenticationToken {
     private final String username;
 
     public CustomJwtAuthenticationToken(String token) {
-        super(Collections.emptyList()); // No authorities initially
+        super(Collections.emptyList());
         this.token = token;
-        this.username = null; // Initially unknown
-        setAuthenticated(false); // Not authenticated at first
+        this.username = null;
+        setAuthenticated(false);
     }
 
-    public CustomJwtAuthenticationToken(String token, String username) {
-        super(Collections.emptyList()); // You can add roles later
+    public CustomJwtAuthenticationToken(String token, String username, Collection<? extends GrantedAuthority> authorities) {
+        super(authorities);
         this.token = token;
         this.username = username;
         setAuthenticated(true); // Now authenticated

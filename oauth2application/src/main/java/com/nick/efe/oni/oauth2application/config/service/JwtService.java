@@ -1,30 +1,82 @@
 package com.nick.efe.oni.oauth2application.config.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 @Service
 public class JwtService {
 
-    @Value("SECRET_KEY")
-    private String secretKey;
-
-    public String validateTokenAndGetUsername(String token) {
+    public String[] validateTokenAndGetUsername(String token) throws Exception {
         String[] split = token.split("\\.");
-        String encodedHeader = split[0];
-        String encodedPayload = split[1];
-        String encodedSignature = split[2];
+        String decodedPayload = decodeToString(split[1]);
 
-        String decodedHeader = decodeToString(encodedHeader); // works
-        String decodedPayload = decodeToString(encodedPayload); // works
-        String decodedSignature = decodeToString(encodedSignature); // works?
-        System.out.println("Decoded header: " + decodedHeader);
-        System.out.println("Decoded payload: " + decodedPayload);
-        System.out.println("Decoded signature: " + decodedSignature);
+        if (isTokenTampered(split[0]+"."+split[1], split[2])) return new String[2];
 
-        return null;
+        if (isIssuerNotTrusted(decodedPayload)) return new String[2];
+        if (isTokenExpired(decodedPayload)) return new String[2];
+
+
+        return extractUsernameAndRole(decodedPayload);
+    }
+
+    private String[] extractUsernameAndRole(String decodedPayload) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode payloadJson = objectMapper.readTree(decodedPayload);
+
+        String username = payloadJson.get("sub").asText();
+        String role = payloadJson.get("role").asText().toUpperCase();
+
+        return new String[]{username, role};
+    }
+
+    private boolean isIssuerNotTrusted(String decodedPayload) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode payloadJson = objectMapper.readTree(decodedPayload);
+
+        String issuer = payloadJson.get("iss").asText();
+
+        System.out.println("issuer: "+issuer +
+                (!issuer.equals("Oauth2applicationApplication")?" hence it is not trusted":" hence it is trusted"));
+
+        return !issuer.equals("Oauth2applicationApplication");
+    }
+
+    private boolean isTokenExpired(String decodedPayload) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode payloadJson = objectMapper.readTree(decodedPayload);
+
+        long issueTime = payloadJson.get("iat").asLong();
+        long expiryTime = payloadJson.get("exp").asLong();
+
+        System.out.println(issueTime+" ? "+expiryTime + " thus " + (!(issueTime<expiryTime)));
+
+        return !(/*System.currentTimeMillis() < issueTime &&*/ issueTime < expiryTime);
+    }
+
+    private boolean isTokenTampered(String message, String signatureToMatchWith) throws NoSuchAlgorithmException, InvalidKeyException {
+        String signature = generateSignature(message);
+        System.out.println("Signature1: "+signature +
+                "\nSignature2: " + signatureToMatchWith.replaceAll("=+$", "") + " thus "+(!signature.equals(signatureToMatchWith.replaceAll("=+$", ""))));
+        return !signature.equals(signatureToMatchWith.replaceAll("=+$", ""));
+    }
+
+    //TODO instance could be based on header values
+    private String generateSignature(String message) throws InvalidKeyException, NoSuchAlgorithmException {
+        Mac mac = Mac.getInstance("HmacSHA256");
+        String secret = "LzjjrDyx48aZ0VX0IjP6Igr0zO+lmzUWadqi7DaCDd8=";
+        SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+        mac.init(secretKey);
+        byte[] hash = mac.doFinal(message.getBytes());
+
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
     }
 
     private String decodeToString(String encodedString) {
