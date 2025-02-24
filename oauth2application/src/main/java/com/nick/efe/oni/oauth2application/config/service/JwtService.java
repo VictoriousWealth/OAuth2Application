@@ -2,8 +2,6 @@ package com.nick.efe.oni.oauth2application.config.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -11,19 +9,18 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
-import java.util.List;
 
 @Service
 public class JwtService {
 
-    public String[] validateTokenAndGetUsername(String token) throws Exception {
+    public String[] validateTokenAndGetUsernameAndRole(String token) throws Exception {
         String[] split = token.split("\\.");
         String decodedPayload = decodeToString(split[1]);
 
         if (isTokenTampered(split[0]+"."+split[1], split[2])) return new String[2];
 
         if (isIssuerNotTrusted(decodedPayload)) return new String[2];
-        if (isTokenExpired(decodedPayload)) return new String[2];
+//        if (isTokenExpired(decodedPayload)) return new String[2];
 
 
         return extractUsernameAndRole(decodedPayload);
@@ -98,7 +95,7 @@ public class JwtService {
                 "  \"sub\": \""+username+"\",\n" +
                 "  \"role\": \""+role+"\",\n" +
                 "  \"iat\": "+ timeInSeconds +",\n" +
-                "  \"exp\": "+timeInSeconds+3600+"\n" +
+                "  \"exp\": "+(timeInSeconds+3600)+"\n" +
                 "}";
 
         header = Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes());

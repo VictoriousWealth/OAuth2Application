@@ -4,35 +4,33 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.*;
 
 
 @Component
-public class LoggingFilter implements Filter {
+public class LoggingFilter extends OncePerRequestFilter {
 
     /***
      * The purpose of this class to log all responses that leave through port
      * 8080 or the port by which tomcat apache is listening to
      * @param request  The request to process
      * @param response The response associated with the request
-     * @param chain    Provides access to the next filter in the chain for this filter to pass the request and response
+     * @param filterChain    Provides access to the next filter in the chain for this filter to pass the request and response
      *                     to for further processing
      *
      */
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         System.out.println("======================================================");
-        HttpServletRequest req = (HttpServletRequest) request;
-        System.out.println("🌐 Incoming Request: " + req.getMethod() + " " + req.getRequestURI() + " with headers: " + getHeaderContent(req));
+        System.out.println("🌐 Incoming Request: " + request.getMethod() + " " + request.getRequestURI() + " with headers: " + getHeaderContent(request));
 
-        chain.doFilter(request, response); // Continue request processing
+        filterChain.doFilter(request, response);
 
-        HttpServletResponse res = (HttpServletResponse) response;
-        System.out.println("🌐 Outgoing Response with status code " + res.getStatus() + " with headers: {" + getHeaderContent(res)+"}");
+        System.out.println("🌐 Outgoing Response with status code " + response.getStatus() + " with headers: {" + getHeaderContent(response)+"}");
         System.out.println("======================================================\n");
 
     }

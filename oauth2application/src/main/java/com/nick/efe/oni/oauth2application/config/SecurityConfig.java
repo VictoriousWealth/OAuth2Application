@@ -1,9 +1,9 @@
 package com.nick.efe.oni.oauth2application.config;
 
 import com.nick.efe.oni.oauth2application.config.filter.CustomJwtAuthFilter;
-import com.nick.efe.oni.oauth2application.config.filter.CustomUserDetailsAuthFilter;
 import com.nick.efe.oni.oauth2application.config.filter.LoggingFilter;
 import com.nick.efe.oni.oauth2application.config.provider.CustomJwtAuthenticationProvider;
+import com.nick.efe.oni.oauth2application.config.service.JwtService;
 import com.nick.efe.oni.oauth2application.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +33,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, UserRepository userRepository, JwtService jwtService) throws Exception {
         // 🔹 Disable CSRF (only for APIs; keep it enabled for traditional web apps)
         http.csrf(AbstractHttpConfigurer::disable);
 
@@ -43,9 +43,7 @@ public class SecurityConfig {
         // 🔹 Custom Logging Filter (Before AsyncManagerFilter)
         http.addFilterBefore(new LoggingFilter(), WebAsyncManagerIntegrationFilter.class);
         // 🔹 Authentication Filters
-        http.addFilterBefore(new CustomJwtAuthFilter(requestMatcher(),
-                authenticationManager()), UsernamePasswordAuthenticationFilter.class);
-        http.addFilterBefore(new CustomUserDetailsAuthFilter(requestMatcher(), authenticationManager()),
+        http.addFilterBefore(new CustomJwtAuthFilter(jwtService, authenticationManager(), userRepository),
                 UsernamePasswordAuthenticationFilter.class);
 
         // 🔹 Logout Filter (Enables /logout)

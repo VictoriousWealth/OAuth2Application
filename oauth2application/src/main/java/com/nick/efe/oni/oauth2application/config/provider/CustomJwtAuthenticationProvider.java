@@ -14,7 +14,7 @@ import java.util.Collections;
 
 @Component
 public class CustomJwtAuthenticationProvider implements AuthenticationProvider {
-    private final JwtService jwtService; // Your custom JWT validation service
+    private final JwtService jwtService;
 
     public CustomJwtAuthenticationProvider(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -27,25 +27,19 @@ public class CustomJwtAuthenticationProvider implements AuthenticationProvider {
         String username;
         String role;
         try {
-            String[] o = jwtService.validateTokenAndGetUsername(token);
+            String[] o = jwtService.validateTokenAndGetUsernameAndRole(token);
             username = o[0];
             role = o[1];
         } catch (Exception e) {
-            throw new AuthenticationException("No such algorithm exist or an invalid key is being used") {
-                @Override
-                public String getMessage() {
-                    return super.getMessage();
-                }
-            };
+            throw new AuthenticationException("No such algorithm exist or an invalid key is being used"){};
         }
 
-        if (username == null || role == null) {
-            throw new BadCredentialsException("Invalid JWT Token");
-        }
-        Collection<? extends GrantedAuthority> authorites = Collections.singletonList(new SimpleGrantedAuthority("ROLE_"+role));
-        CustomJwtAuthenticationToken customJwtAuthenticationToken =  new CustomJwtAuthenticationToken(token, username, authorites);
+        if (username == null || role == null) throw new AuthenticationException("Invalid JWT Token"){};
+
+        Collection<? extends GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_"+role));
+        CustomJwtAuthenticationToken customJwtAuthenticationToken =  new CustomJwtAuthenticationToken(token, username, authorities);
         customJwtAuthenticationToken.setDetails(authentication.getDetails());
-        System.out.println("Authented " + customJwtAuthenticationToken);
+        System.out.println("Authenticated " + customJwtAuthenticationToken);
         return customJwtAuthenticationToken; // Successfully authenticated
     }
 
