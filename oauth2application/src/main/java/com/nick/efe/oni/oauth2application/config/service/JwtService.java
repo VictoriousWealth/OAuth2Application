@@ -3,6 +3,7 @@ package com.nick.efe.oni.oauth2application.config.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -10,6 +11,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -57,9 +59,10 @@ public class JwtService {
         long expiryTime = payloadJson.get("exp").asLong();
 
         long timeInSeconds = System.currentTimeMillis()/1000;
-        System.out.println(timeInSeconds + " ? "+issueTime+" ? "+expiryTime + " thus " + (!(timeInSeconds < issueTime && issueTime < expiryTime)));
+        boolean isTokenExpired = !(issueTime < timeInSeconds && timeInSeconds < expiryTime);
+        System.out.println(timeInSeconds + " ? "+issueTime+" ? "+expiryTime + " thus " + isTokenExpired);
 
-        return !(issueTime < timeInSeconds && timeInSeconds < expiryTime);
+        return isTokenExpired;
     }
 
     private boolean isTokenTampered(String message, String signatureToMatchWith) throws NoSuchAlgorithmException, InvalidKeyException {
@@ -82,5 +85,25 @@ public class JwtService {
 
     private String decodeToString(String encodedString) {
         return new String(Base64.getUrlDecoder().decode(encodedString));
+    }
+
+    public String generateToken(String username, String role) throws NoSuchAlgorithmException, InvalidKeyException {
+        String header = "{\n" +
+                "  \"alg\": \"HS256\",\n" +
+                "  \"typ\": \"JWT\"\n" +
+                "}";
+        long timeInSeconds = System.currentTimeMillis() / 1000;
+        String payload = "{\n" +
+                "  \"iss\": \"Oauth2applicationApplication\",\n" +
+                "  \"sub\": \""+username+"\",\n" +
+                "  \"role\": \""+role+"\",\n" +
+                "  \"iat\": "+ timeInSeconds +",\n" +
+                "  \"exp\": "+timeInSeconds+3600+"\n" +
+                "}";
+
+        header = Base64.getUrlEncoder().withoutPadding().encodeToString(header.getBytes());
+        payload = Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
+
+        return header+"."+payload+"."+generateSignature(header+"."+payload);
     }
 }
