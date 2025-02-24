@@ -20,7 +20,7 @@ public class JwtService {
         if (isTokenTampered(split[0]+"."+split[1], split[2])) return new String[2];
 
         if (isIssuerNotTrusted(decodedPayload)) return new String[2];
-//        if (isTokenExpired(decodedPayload)) return new String[2];
+        if (isTokenExpired(decodedPayload)) return new String[2];
 
 
         return extractUsernameAndRole(decodedPayload);
